@@ -1,0 +1,14 @@
+node_modules/
+.next/
+.env
+.env.*
+!.env.example
+*.tsbuildinfo
+apps/web/src/generated/
+.expo/
+dist/
+coverage/
+.local/
+playwright-report/
+test-results/
+SAVES/

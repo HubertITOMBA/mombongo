@@ -1,0 +1,161 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../apps/web/src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum AccountType {
+  INDIVIDUAL
+  BUSINESS
+}
+
+enum MemberRole {
+  OWNER
+  ADMIN
+  MEMBER
+  ACCOUNTANT
+}
+
+enum AddressType {
+  PERSONAL
+  BILLING
+  SHIPPING
+  OFFICE
+  OTHER
+}
+
+model User {
+  id            String       @id @default(cuid())
+  email         String       @unique
+  accountType   AccountType  @default(BUSINESS)
+  name          String?
+  passwordHash  String?
+  emailVerified DateTime?
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+  memberships   Membership[]
+  authSessions  AuthSession[]
+  passwordResets PasswordReset[]
+}
+
+model Organization {
+  id           String       @id @default(cuid())
+  name         String
+  slug         String       @unique
+  currency     String       @default("EUR") @db.Char(3)
+  timezone     String       @default("Europe/Paris")
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+  memberships  Membership[]
+  customers    Customer[]
+}
+
+model Membership {
+  id             String       @id @default(cuid())
+  userId         String
+  organizationId String
+  role           MemberRole   @default(MEMBER)
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  createdAt      DateTime     @default(now())
+
+  @@unique([userId, organizationId])
+  @@index([organizationId])
+}
+
+model Customer {
+  id             String       @id @default(cuid())
+  organizationId String
+  displayName    String
+  email          String?
+  phone          String?
+  companyNumber  String?
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  addresses      Address[]
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  @@unique([id, organizationId])
+  @@index([organizationId, displayName])
+}
+
+model Address {
+  id             String      @id @default(cuid())
+  organizationId String
+  customerId     String
+  type           AddressType
+  label          String
+  line1          String
+  line2          String?
+  postalCode     String
+  city           String
+  countryCode    String      @db.Char(2)
+  customer       Customer    @relation(fields: [customerId, organizationId], references: [id, organizationId], onDelete: Cascade)
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+
+  @@index([organizationId, customerId])
+}
+
+
+enum ChallengePurpose {
+  REGISTER
+  LOGIN
+}
+
+model AuthChallenge {
+  id                String           @id
+  email             String
+  purpose           ChallengePurpose
+  bindingHash       String
+  codeHash          String
+  passwordHash      String?
+  name              String?
+  organizationName  String?
+  accountType       AccountType      @default(BUSINESS)
+  userId            String?
+  attempts          Int              @default(0)
+  sends             Int              @default(1)
+  expiresAt         DateTime
+  lastSentAt        DateTime         @default(now())
+  createdAt         DateTime         @default(now())
+  consumedAt        DateTime?
+
+  @@index([email, purpose])
+  @@index([expiresAt])
+}
+
+model AuthSession {
+  id         String   @id
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt  DateTime @default(now())
+  expiresAt  DateTime
+
+  @@index([userId])
+  @@index([expiresAt])
+}
+
+model AuthRateLimit {
+  key        String   @id
+  count      Int      @default(1)
+  expiresAt  DateTime
+
+  @@index([expiresAt])
+}
+
+model PasswordReset {
+  id         String    @id
+  tokenHash  String
+  userId     String
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt  DateTime  @default(now())
+  expiresAt  DateTime
+  consumedAt DateTime?
+
+  @@index([userId])
+  @@index([expiresAt])
+}

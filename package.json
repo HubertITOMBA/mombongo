@@ -1,0 +1,41 @@
+{
+  "name": "facturia",
+  "version": "0.1.0",
+  "private": true,
+  "workspaces": [
+    "apps/web",
+    "packages/contracts"
+  ],
+  "scripts": {
+    "dev": "npm run dev --workspace @facturia/web",
+    "build": "npm run build --workspace @facturia/web",
+    "lint": "eslint .",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "db:generate": "prisma generate",
+    "db:validate": "prisma validate",
+    "db:migrate": "prisma migrate dev",
+    "db:studio": "prisma studio",
+    "mail:local": "node scripts/read-local-mail.mjs",
+    "db:local": "bash scripts/setup-local-db.sh",
+    "test:auth": "tsx --tsconfig apps/web/tsconfig.json --test tests/auth.integration.test.ts",
+    "test:browser": "playwright test"
+  },
+  "engines": {
+    "node": ">=22.12.0"
+  },
+  "dependencies": {
+    "@prisma/adapter-pg": "^7.0.0",
+    "@prisma/client": "^7.0.0",
+    "dotenv": "^17.0.0",
+    "pg": "^8.16.0"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.63.0",
+    "eslint": "^9.39.5",
+    "eslint-config-next": "^16.3.6",
+    "prisma": "^7.0.0",
+    "tsx": "^4.23.15",
+    "typescript": "^5.9.0"
+  },
+  "type": "module"
+}
