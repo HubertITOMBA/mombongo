@@ -38,9 +38,11 @@ PostgreSQL : https://www.postgresql.org/download/linux/redhat/
 
 ## État après le lot identité
 
-PostgreSQL 18 installé et cluster propre à Facturia dans `.local/postgres`, sur
+PostgreSQL 18 installé et cluster propre à Mombongo dans `.local/postgres`, sur
 127.0.0.1:5433. PostgreSQL 17 continue sur 5432. Démarrage : `npm run db:local`.
 La migration initiale et la génération Prisma sont appliquées.
+Les fixtures DEMO se chargent uniquement avec `npm run db:seed:demo`
+([Fixtures DEMO](22-fixtures-demo.md)).
 
 Le build de production Webpack passe. Le premier blocage Turbopack était lié
 à l’environnement d’exécution ; le serveur de développement est fonctionnel sur 9070.

@@ -10,7 +10,8 @@ export function matches(value: string, hash: string) {
   return expected.length === actual.length && timingSafeEqual(expected, actual);
 }
 export function generateCode() { return randomInt(0, 1_000_000).toString().padStart(6, "0"); }
-export const CHALLENGE_COOKIE = "facturia-challenge";
+export const CHALLENGE_COOKIE = "mombongo-challenge";
+export const LEGACY_CHALLENGE_COOKIE = "facturia-challenge";
 export const CODE_TTL_MS = 5 * 60_000;
 export const SESSION_TTL_SECONDS = 8 * 60 * 60;
 export function challengeCookieOptions() {

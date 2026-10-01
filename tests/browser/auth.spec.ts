@@ -1,4 +1,4 @@
-import { test, expect } from "@playwright/test";
+import { test, expect } from "./test";
 import { config } from "dotenv";
 import { readdir, readFile, unlink } from "node:fs/promises";
 import path from "node:path";
@@ -65,7 +65,7 @@ test(`${profile} : inscription, validation, espace privé, déconnexion et recon
   await page.getByRole("button", { name: "Valider et accéder" }).click();
   await expect(page).toHaveURL(/espace/, { timeout: 30_000 });
   if (profile === "Entreprise") {
-    await expect(page.getByText(organization, { exact: true })).toBeVisible();
+    await expect(page.getByRole("main").getByText(organization, { exact: true })).toBeVisible();
     await expect(page.getByRole("heading", { name: "Clients et prospects" })).toBeVisible();
   } else {
     await expect(page.getByText("Votre espace particulier", { exact: true })).toBeVisible();

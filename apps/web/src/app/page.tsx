@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { CalendarDays, Check, CircleHelp, FileText, Layers, Receipt, Users } from "lucide-react";
+import { CalendarDays, Check, CircleHelp, FileText, Receipt, Users } from "lucide-react";
+import { BrandLogo, BrandMarkImage } from "@/components/brand";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Guide } from "@/components/marketing/guide";
@@ -16,8 +17,8 @@ export default function Home() {
     <div className="min-h-screen">
       <header className="border-b border-border bg-card">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-5">
-          <Link href="/" className="flex items-center gap-2 text-xl font-bold">
-            <Layers className="text-emerald-700" />facturia<span className="text-emerald-600">.</span>
+          <Link href="/" aria-label="Mombongo" className="flex items-center">
+            <BrandMarkImage priority />
           </Link>
           <Link href="/connexion" className="text-sm font-medium text-primary hover:underline">Se connecter</Link>
         </div>
@@ -41,17 +42,19 @@ export default function Home() {
               </Button>
             </div>
           </div>
-          <aside className="rounded-2xl bg-emerald-950 p-8 text-white">
-            <p className="text-xs font-semibold uppercase tracking-widest text-emerald-300">Une base commune</p>
-            <h2 className="mt-3 text-2xl font-semibold">Vos besoins.<br />Votre espace.</h2>
-            <ul className="mt-6 space-y-4 text-sm text-emerald-50">
-              {["Particulier ou entreprise, un espace adapté", "Abonnement ou paiement au service", "Web d’abord, Android puis iOS"].map(item => (
-                <li key={item} className="flex gap-3"><Check size={18} className="shrink-0 text-emerald-300" />{item}</li>
-              ))}
-            </ul>
-            <p className="mt-8 border-t border-emerald-800 pt-5 text-xs leading-relaxed text-emerald-200">
-              Le socle est en cours de construction. Les fonctionnalités métier et les paiements ne sont pas encore activés.
-            </p>
+          <aside className="overflow-hidden rounded-3xl border border-emerald-100 bg-white shadow-[0_24px_60px_-28px_rgba(6,95,70,0.35)]">
+            <div className="bg-linear-to-b from-emerald-50/80 to-white px-8 pb-4 pt-8 sm:px-10">
+              <BrandLogo priority className="mx-auto max-w-88" />
+            </div>
+            <div className="border-t border-emerald-100 bg-emerald-950 px-8 py-6 text-white sm:px-10">
+              <p className="text-xs font-semibold uppercase tracking-widest text-emerald-300">Une base commune</p>
+              <h2 className="mt-2 text-xl font-semibold">Vos besoins. Votre espace.</h2>
+              <ul className="mt-4 space-y-3 text-sm text-emerald-50">
+                {["Particulier ou entreprise, un espace adapté", "Abonnement ou paiement au service", "Web d’abord, Android puis iOS"].map(item => (
+                  <li key={item} className="flex gap-3"><Check size={18} className="shrink-0 text-emerald-300" />{item}</li>
+                ))}
+              </ul>
+            </div>
           </aside>
         </section>
         <section className="mt-12 rounded-2xl border border-emerald-200 bg-accent p-6 sm:p-8">
@@ -65,7 +68,7 @@ export default function Home() {
         <section className="mt-16">
           <div className="mb-6 flex items-baseline justify-between gap-4">
             <h2 className="text-xl font-semibold">Pour les entreprises</h2>
-            <span className="text-xs text-muted-foreground">Modules à venir</span>
+            <span className="text-xs text-muted-foreground">CRM, agenda, devis et factures déjà ouverts</span>
           </div>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {modules.map(({ title, text, icon: Icon }) => (
@@ -74,7 +77,9 @@ export default function Home() {
                   <Icon size={24} className="mb-6 text-emerald-700" />
                   <h3 className="font-semibold">{title}</h3>
                   <p className="mt-3 text-sm leading-relaxed text-muted-foreground">{text}</p>
-                  <span className="mt-6 inline-block rounded bg-muted px-2 py-1 text-xs text-slate-600">Planifié</span>
+                  <span className={`mt-6 inline-block rounded px-2 py-1 text-xs ${title === "Prospects & clients" || title === "Rendez-vous" ? "bg-emerald-50 text-emerald-800" : "bg-muted text-slate-600"}`}>
+                    {title === "Prospects & clients" || title === "Rendez-vous" ? "Disponible" : "Planifié"}
+                  </span>
                 </CardContent>
               </Card>
             ))}

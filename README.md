@@ -1,4 +1,4 @@
-# Facturia
+# Mombongo
 
 SaaS pour particuliers et entreprises : factures personnelles et paiements prévus,
 facturation électronique, frais, prospects et rendez-vous professionnels.
@@ -12,6 +12,7 @@ npm install
 npm run db:local
 npm run db:generate
 npm run db:migrate
+npm run db:seed:demo
 npm run dev
 ```
 
@@ -20,8 +21,21 @@ base privée dans `.local/postgres`, puis la démarre sur **127.0.0.1:5433**.
 Il génère les paramètres locaux et les secrets manquants sans écraser une
 configuration existante. PostgreSQL 17 sur 5432 n’est pas modifié.
 Les fichiers `.local`, `.env` et `apps/web/.env.local` ne sont pas versionnés.
+`db:seed:demo` / `db:purge:demo` sont **interdits en production** ; voir
+[Fixtures DEMO](DOCS/22-fixtures-demo.md). `db:purge:demo` retire uniquement
+le dataset marqué.
 
 Ouvrir [localhost:9070](http://localhost:9070).
+
+Pour l’application mobile Expo (Android en premier) :
+
+```bash
+npm run dev:mobile
+```
+
+Le serveur web doit déjà tourner et être joignable depuis le téléphone
+(même Wi-Fi, port 9070 ouvert). L’app reprend l’IP d’Expo Go. Les jetons
+restent dans SecureStore.
 
 ## Tester une inscription
 
@@ -33,7 +47,9 @@ Ouvrir [localhost:9070](http://localhost:9070).
 La boîte mail locale **n’envoie aucun email réel** et ne fonctionne jamais en
 production. Pour Resend, configurer `MAIL_TRANSPORT=resend`, `RESEND_API_KEY`
 et `EMAIL_FROM` dans `apps/web/.env.local`, puis redémarrer Next.js.
-`AUTH_URL` doit correspondre exactement à l’origine ouverte dans le navigateur.
+`AUTH_URL` doit correspondre à l’origine ouverte dans le navigateur.
+`APP_URL` (repli : `AUTH_URL`) construit les liens d’emails. En production :
+`APP_URL=https://mombongo.fr` et `AUTH_URL=https://mombongo.fr`.
 
 ## Configuration manuelle et Docker
 
@@ -51,7 +67,7 @@ npm run db:validate
 npm run test:auth
 # Nécessite le serveur sur 9070, la boîte locale et Google Chrome :
 npm run test:browser
-npm run build --workspace @facturia/web -- --webpack
+npm run build --workspace @mombongo/web -- --webpack
 ```
 
 Les tests créent des comptes temporaires et nettoient leurs données. Ils doivent
@@ -62,11 +78,10 @@ utilise `/usr/bin/google-chrome`, à adapter dans `playwright.config.ts` si néc
 
 Inscription avec vérification email, connexion email/mot de passe puis code,
 NextAuth (5.0.0-beta.32), sessions révocables, choix Particulier/Entreprise, création de l’entreprise et du rôle
-propriétaire pour les professionnels, espace privé adapté, déconnexion, guide prédéfini et endpoint health.
+propriétaire pour les professionnels, espace privé adapté, déconnexion, invitations et rôles d’équipe, fiches clients et adresses, pipeline CRM, API mobile d’identité, application Expo (connexion, tableau de bord et pipeline), guide prédéfini et endpoint health.
 
-À venir : invitations et gestion des rôles,
-CRUD métier, facturation électronique, paiements Stripe/PayPal, notifications,
-Gmail, assistant IA et application Expo. Aucun abonnement n’est facturé.
+À venir : premier connecteur PA réel (A15.1 différé), paiements Stripe/PayPal,
+notifications, Gmail, assistant IA. Aucun abonnement n’est facturé.
 
 Lire [DOCS/README.md](DOCS/README.md).
 

@@ -40,10 +40,20 @@ identifie toujours un seul compte. L’utilisation simultanée d’un espace per
 et d’entreprises avec un même compte pourra faire l’objet d’un futur sélecteur
 d’espaces ; elle n’est pas implémentée dans cette étape.
 
+Ne pas confondre :
+
+- un **compte** particulier (`User.accountType = INDIVIDUAL`) : consommateur
+  Mombongo, sans tenant, ne facture pas ;
+- une **Organization** en nom propre (`entityKind = SOLE_TRADER`) : émetteur
+  qui facture (micro-entrepreneur, EI, activité exercée en nom propre) ;
+- un **Customer PERSON** : destinataire particulier d’un devis/facture.
+
+Exemple : Jean Martin EI (Organization) facture Marie Dupont (Customer PERSON).
+
 ## Factures et paiements particuliers : suite prévue
 
 Distinguer les factures reçues par un particulier, les factures commerciales
-émises par une entreprise et les factures d’abonnement Facturia.
+émises par une entreprise et les factures d’abonnement Mombongo.
 Les futurs documents personnels devront être liés à leur propriétaire utilisateur,
 avec contrôle serveur systématique de userId et accès privé aux pièces.
 Aucun rattachement automatique à une facture sur la seule correspondance email.

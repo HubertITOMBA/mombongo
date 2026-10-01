@@ -7,7 +7,7 @@ import { clientAddress } from "@/lib/auth/rate-limit";
 import { hasValidOrigin } from "@/lib/auth/http";
 
 export const { handlers, auth, signOut } = NextAuth({
-  trustHost: true, // L’origine des mutations est contrôlée contre AUTH_URL, défini explicitement.
+  trustHost: true, // L’origine des mutations est contrôlée contre AUTH_URL / APP_URL.
   pages: { signIn: "/connexion" },
   session: { strategy: "jwt", maxAge: SESSION_TTL_SECONDS },
   providers: [Credentials({

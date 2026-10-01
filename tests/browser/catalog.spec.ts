@@ -1,0 +1,107 @@
+import { test, expect } from "./test";
+import { config } from "dotenv";
+import { readdir, readFile, unlink } from "node:fs/promises";
+import path from "node:path";
+import { randomUUID } from "node:crypto";
+import { getDb } from "../../apps/web/src/lib/db";
+config({ path: "apps/web/.env.local", quiet: true });
+const emails: string[] = [];
+const organization = `Catalogue ${randomUUID().slice(0, 8)}`;
+const password = "Une phrase de passe navigateur 123!";
+
+async function latestCode(email: string) {
+  const dir = process.env.LOCAL_MAIL_DIR!;
+  const files = await readdir(dir);
+  const mails = await Promise.all(files.filter(file => file.endsWith(".json")).map(async file => JSON.parse(await readFile(path.join(dir, file), "utf8"))));
+  const mail = mails.filter(item => item.to === email).sort((a, b) => b.createdAt.localeCompare(a.createdAt))[0];
+  return /\b\d{6}\b/.exec(mail.text)![0];
+}
+
+test.afterAll(async () => {
+  const db = getDb();
+  const memberships = await db.membership.findMany({ where: { user: { email: { in: emails } } } });
+  const organizationIds = memberships.map(item => item.organizationId);
+  await db.document.deleteMany({ where: { organizationId: { in: organizationIds }, sourceDocumentId: { not: null } } });
+  await db.document.deleteMany({ where: { organizationId: { in: organizationIds } } });
+  await db.customer.deleteMany({ where: { organizationId: { in: organizationIds } } });
+  await db.catalogItem.deleteMany({ where: { organizationId: { in: organizationIds } } });
+  await db.user.deleteMany({ where: { email: { in: emails } } });
+  await db.organization.deleteMany({ where: { id: { in: organizationIds } } });
+  await db.authChallenge.deleteMany({ where: { email: { in: emails } } });
+  const dir = process.env.LOCAL_MAIL_DIR!;
+  for (const file of await readdir(dir).catch(() => [])) {
+    if (file.endsWith(".json") && emails.includes(JSON.parse(await readFile(path.join(dir, file), "utf8")).to)) await unlink(path.join(dir, file));
+  }
+  await db.$disconnect();
+});
+
+test("catalogue : service, produit, devis, ligne libre, historique et désactivation", async ({ page }) => {
+  test.setTimeout(90_000);
+  const ownerEmail = `browser-catalog-${randomUUID()}@example.test`;
+  emails.push(ownerEmail);
+  await page.goto("/inscription");
+  await page.getByRole("radio", { name: /^Entreprise/ }).check();
+  await page.getByLabel("Votre nom").fill("Camille Catalogue");
+  await page.getByLabel("Nom de votre entreprise").fill(organization);
+  await page.getByLabel("Adresse email").fill(ownerEmail);
+  await page.getByLabel("Mot de passe", { exact: true }).fill(password);
+  await page.getByRole("button", { name: "Créer mon espace" }).click();
+  await expect(page).toHaveURL(/verification/);
+  await page.getByLabel("Code de vérification").fill(await latestCode(ownerEmail));
+  await page.getByRole("button", { name: "Valider et accéder" }).click();
+  await expect(page).toHaveURL(/espace/);
+  await page.getByRole("link", { name: "Catalogue", exact: true }).click();
+  await expect(page.getByRole("heading", { name: new RegExp(`Produits et services de ${organization}`) })).toBeVisible();
+  await page.getByLabel("Type").selectOption("SERVICE");
+  await page.getByLabel("Référence").fill("CONSULT-01");
+  await page.getByLabel("Nom").fill("Consultation");
+  await page.getByLabel("Description").fill("A.");
+  await page.getByLabel("Prix unitaire HT").fill("100");
+  await page.getByRole("button", { name: "Ajouter au catalogue" }).click();
+  await expect(page.getByRole("heading", { name: "Consultation", level: 1 })).toBeVisible();
+  await page.getByRole("link", { name: "Produits et services" }).click();
+  await expect(page.getByRole("heading", { name: new RegExp(`Produits et services de ${organization}`) })).toBeVisible();
+  await page.getByLabel("Type").selectOption("PRODUCT");
+  await page.getByLabel("Nom").fill("Clavier");
+  await page.getByLabel("Prix unitaire HT").fill("40");
+  await page.getByRole("button", { name: "Ajouter au catalogue" }).click();
+  await expect(page.getByRole("heading", { name: "Clavier", level: 1 })).toBeVisible();
+  await page.getByRole("link", { name: "Clients", exact: true }).click();
+  await page.getByLabel("Raison sociale").fill("Atelier Catalogue");
+  await page.getByRole("button", { name: "Créer la fiche" }).click();
+  await expect(page.getByRole("heading", { name: "Atelier Catalogue" })).toBeVisible();
+  await page.getByRole("link", { name: "Devis", exact: true }).click();
+  await page.getByLabel("Titre").fill("Mission");
+  await page.getByLabel("Destinataire").selectOption({ label: "Atelier Catalogue" });
+  await page.getByLabel("Produit ou service").selectOption({ label: "Service · Consultation (CONSULT-01)" });
+  await expect(page.getByLabel("Première ligne")).toHaveValue("A.");
+  await page.getByRole("button", { name: "Créer le brouillon" }).click();
+  await expect(page.getByRole("heading", { name: "Mission" })).toBeVisible();
+  await expect(page.getByText("A.")).toBeVisible();
+  await expect(page.getByText(/TTC 120,00/)).toBeVisible();
+  await page.getByLabel("Produit ou service").selectOption({ label: "Ligne libre" });
+  await page.getByLabel("Ligne").fill("Ligne libre");
+  await page.getByLabel("Prix HT").fill("10");
+  await page.getByRole("button", { name: "Ajouter" }).click();
+  await expect(page.getByText("Ligne ajoutée.")).toBeVisible();
+  await expect(page.getByRole("cell", { name: "Ligne libre" })).toBeVisible();
+  await page.getByRole("link", { name: "Catalogue", exact: true }).click();
+  await page.getByRole("link", { name: "Consultation" }).click();
+  await page.getByLabel("Description").fill("B.");
+  await page.getByLabel("Prix unitaire HT").fill("150");
+  await page.getByLabel("TVA").selectOption("1000");
+  await page.getByRole("button", { name: "Enregistrer l’article" }).click();
+  await expect(page.getByText("Article enregistré")).toBeVisible();
+  await page.getByRole("link", { name: "Devis", exact: true }).click();
+  await page.getByRole("link", { name: "Mission" }).click();
+  await expect(page.getByText("A.")).toBeVisible();
+  await expect(page.getByText("B.")).toHaveCount(0);
+  await expect(page.getByText(/100,00/)).toBeVisible();
+  await page.getByRole("link", { name: "Catalogue", exact: true }).click();
+  await page.getByRole("link", { name: "Consultation" }).click();
+  await page.getByRole("button", { name: "Désactiver" }).click();
+  await expect(page.getByText("n’est plus proposé")).toBeVisible();
+  await page.getByRole("link", { name: "Devis", exact: true }).click();
+  await expect(page.getByLabel("Produit ou service").locator("option", { hasText: "Consultation" })).toHaveCount(0);
+  await expect(page.getByLabel("Produit ou service").locator("option", { hasText: "Clavier" })).toHaveCount(1);
+});

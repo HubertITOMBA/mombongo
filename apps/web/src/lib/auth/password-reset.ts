@@ -1,6 +1,6 @@
 import { randomBytes, randomUUID } from "node:crypto";
 import { hash } from "argon2";
-import { forgotPasswordSchema, resetPasswordSchema } from "@facturia/contracts";
+import { forgotPasswordSchema, resetPasswordSchema } from "@mombongo/contracts";
 import { getDb } from "@/lib/db";
 import { digest, matches, parseChallengeToken } from "./crypto";
 import { assertMailConfigured, sendPasswordReset } from "./mail";
@@ -52,6 +52,7 @@ export async function resetPassword(body: unknown, address: string) {
     if (!reset || reset.consumedAt || reset.expiresAt.getTime() <= Date.now() || !matches(`reset:${parsed.id}:${parsed.binding}`, reset.tokenHash)) throw invalidLink();
     await tx.user.update({ where: { id: reset.userId }, data: { passwordHash } });
     await tx.authSession.deleteMany({ where: { userId: reset.userId } });
+    await tx.mobileRefreshToken.updateMany({ where: { userId: reset.userId, revokedAt: null }, data: { revokedAt: new Date() } });
     await tx.authChallenge.updateMany({ where: { email: hint.user.email, consumedAt: null }, data: { consumedAt: new Date(), passwordHash: null } });
     await tx.passwordReset.updateMany({ where: { userId: reset.userId, consumedAt: null }, data: { consumedAt: new Date() } });
   });

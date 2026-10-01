@@ -1,14 +1,16 @@
 {
-  "name": "facturia",
+  "name": "mombongo",
   "version": "0.1.0",
   "private": true,
   "workspaces": [
     "apps/web",
+    "apps/mobile",
     "packages/contracts"
   ],
   "scripts": {
-    "dev": "npm run dev --workspace @facturia/web",
-    "build": "npm run build --workspace @facturia/web",
+    "dev": "npm run dev --workspace @mombongo/web",
+    "dev:mobile": "npm run start --workspace @mombongo/mobile",
+    "build": "npm run build --workspace @mombongo/web",
     "lint": "eslint .",
     "typecheck": "npm run typecheck --workspaces --if-present",
     "db:generate": "prisma generate",
@@ -17,7 +19,9 @@
     "db:studio": "prisma studio",
     "mail:local": "node scripts/read-local-mail.mjs",
     "db:local": "bash scripts/setup-local-db.sh",
-    "test:auth": "tsx --tsconfig apps/web/tsconfig.json --test tests/auth.integration.test.ts",
+    "db:seed:demo": "tsx --tsconfig apps/web/tsconfig.json scripts/demo-seed.ts",
+    "db:purge:demo": "tsx --tsconfig apps/web/tsconfig.json scripts/demo-purge.ts",
+    "test:auth": "tsx --tsconfig apps/web/tsconfig.json --test tests/auth.integration.test.ts tests/team.integration.test.ts tests/customers.integration.test.ts tests/mobile-auth.integration.test.ts tests/appointments.integration.test.ts tests/quotes.integration.test.ts tests/invoices.integration.test.ts tests/organization.integration.test.ts tests/document-snapshots.integration.test.ts tests/permissions.integration.test.ts tests/document-integrity.integration.test.ts tests/identifiers.integration.test.ts tests/public-url.integration.test.ts tests/identity.integration.test.ts tests/billing-v2.integration.test.ts tests/catalog.integration.test.ts tests/credit-notes.integration.test.ts tests/payments.integration.test.ts tests/billing-engine.integration.test.ts tests/pdf-documents.integration.test.ts tests/einvoice.integration.test.ts tests/einvoice-platform.integration.test.ts tests/integrations.integration.test.ts tests/document-emails.integration.test.ts tests/demo-fixtures.integration.test.ts",
     "test:browser": "playwright test"
   },
   "engines": {
@@ -35,7 +39,8 @@
     "eslint-config-next": "^16.3.6",
     "prisma": "^7.0.0",
     "tsx": "^4.23.15",
-    "typescript": "^5.9.0"
+    "typescript": "^5.9.0",
+    "unpdf": "^1.8.1"
   },
   "type": "module"
 }

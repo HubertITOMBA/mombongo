@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert } from "@/components/ui/alert";
 import { requestPasswordResetAction, resetPasswordAction } from "@/lib/auth/actions";
-import { resetPasswordSchema } from "@facturia/contracts";
+import { resetPasswordSchema } from "@mombongo/contracts";
 
 let rememberedResetToken: string | null = null;
 

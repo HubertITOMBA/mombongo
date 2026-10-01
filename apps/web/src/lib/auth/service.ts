@@ -1,6 +1,6 @@
 import { randomBytes, randomUUID } from "node:crypto";
 import { hash, verify, argon2id } from "argon2";
-import { loginSchema, registrationSchema, verificationCodeSchema } from "@facturia/contracts";
+import { loginSchema, registrationSchema, verificationCodeSchema } from "@mombongo/contracts";
 import { getDb } from "@/lib/db";
 import type { Prisma } from "@/generated/prisma/client";
 import { CODE_TTL_MS, SESSION_TTL_SECONDS, digest, generateCode, matches, parseChallengeToken } from "./crypto";

@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Sous-ensemble CII Mombongo A13.1 — PAS le XSD officiel UN/CEFACT D22B.
+  Voir README.md dans ce dossier. Utilisé comme documentation de structure.
+-->
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified">
+  <xs:simpleType name="Amount">
+    <xs:restriction base="xs:string">
+      <xs:pattern value="\d+\.\d{2}"/>
+    </xs:restriction>
+  </xs:simpleType>
+  <xs:simpleType name="Date102">
+    <xs:restriction base="xs:string">
+      <xs:pattern value="\d{8}"/>
+    </xs:restriction>
+  </xs:simpleType>
+  <xs:simpleType name="UnitCode">
+    <xs:restriction base="xs:string">
+      <xs:pattern value="[A-Z0-9]{2,3}"/>
+    </xs:restriction>
+  </xs:simpleType>
+  <xs:simpleType name="VatCategory">
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="S"/>
+      <xs:enumeration value="Z"/>
+      <xs:enumeration value="E"/>
+      <xs:enumeration value="AE"/>
+      <xs:enumeration value="O"/>
+    </xs:restriction>
+  </xs:simpleType>
+  <xs:element name="rsm:CrossIndustryInvoice">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element name="rsm:ExchangedDocumentContext" minOccurs="1"/>
+        <xs:element name="rsm:ExchangedDocument" minOccurs="1"/>
+        <xs:element name="rsm:SupplyChainTradeTransaction" minOccurs="1"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+</xs:schema>

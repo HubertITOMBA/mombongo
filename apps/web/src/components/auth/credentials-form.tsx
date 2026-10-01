@@ -63,7 +63,7 @@ export function CredentialsForm({ register = false }: { register?: boolean }) {
       </Button>
       {register && <p className="text-xs leading-relaxed text-muted-foreground">L’inscription ne déclenche aucun abonnement ni paiement. Les modules métier sont en cours de développement.</p>}
       <p className="border-t border-border pt-5 text-center text-sm text-muted-foreground">
-        {register ? "Déjà un compte ? " : "Vous découvrez Facturia ? "}
+        {register ? "Déjà un compte ? " : "Vous découvrez Mombongo ? "}
         <Link className="font-medium text-primary underline-offset-4 hover:underline" href={register ? "/connexion" : "/inscription"}>
           {register ? "Se connecter" : "Créer un compte"}
         </Link>

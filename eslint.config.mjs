@@ -14,7 +14,10 @@ export default defineConfig([
     },
   },
   {
-    files: ["apps/web/src/components/auth/password-recovery-form.tsx"],
+    files: [
+      "apps/web/src/components/auth/password-recovery-form.tsx",
+      "apps/web/src/components/team/invitation-form.tsx",
+    ],
     rules: {
       "react-hooks/set-state-in-effect": "off",
     },
@@ -33,5 +36,6 @@ export default defineConfig([
     "coverage/**",
     "playwright-report/**",
     "test-results/**",
+    "apps/mobile/**",
   ]),
 ]);

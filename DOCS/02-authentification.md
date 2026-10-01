@@ -7,7 +7,7 @@ vérification email à l’inscription, connexion en deux étapes, choix Particu
 avec un propriétaire uniquement pour le profil entreprise, espace privé et déconnexion. La version NextAuth est encore
 bêta ; une vérification de sa stabilité et des mises à jour reste requise avant production.
 
-Routes : `/inscription`, `/connexion`, `/verification`, `/espace`.
+Routes : `/inscription`, `/connexion`, `/verification`, `/espace`, `/espace/equipe`, `/espace/clients`, `/invitation`.
 API : `POST /api/v1/auth/register`, `/login`, `/resend` et routes NextAuth `/api/auth/*`.
 
 ## Parcours et garanties
@@ -39,14 +39,24 @@ huit heures maximum. À chaque lecture de session, NextAuth vérifie que cette
 session existe encore et n’est pas expirée. La déconnexion supprime la session.
 Les accès à l’espace rechargent l’appartenance à l’entreprise côté serveur.
 
+L’organisation active du web est mémorisée dans le cookie HttpOnly
+`mombongo-active-org`. Un cookie héritage `facturia-active-org` est encore lu
+une fois, revalidé par Membership, puis migré. Ce cookie n’autorise rien : chaque résolution vérifie
+`Membership(userId, organizationId)`. Sans cookie, une seule appartenance est
+activée automatiquement ; plusieurs appartenances reprennent temporairement la
+première puis l’enregistrent. Un sélecteur du workspace permet ensuite de
+basculer. Un identifiant absent, inexistant ou sans appartenance est refusé.
+
 Compteurs de limitation persistants et atomiques PostgreSQL, par email et origine
 réseau. Par défaut, l’origine réseau est un compteur global partagé : l’application
 ne fait pas confiance à un en-tête IP fourni librement. Derrière un proxy qui
 **écrase** `X-Real-IP`, activer `AUTH_TRUST_PROXY=true` pour limiter par IP.
 Valider les seuils pour la volumétrie réelle avant ouverture publique.
 
-Les mutations vérifient l’Origin contre `AUTH_URL`. NextAuth conserve sa protection
-CSRF. Les corps JSON de démarrage sont limités à 8 Ko.
+Les mutations vérifient l’Origin contre `AUTH_URL` (repli `APP_URL`). NextAuth
+conserve sa protection CSRF. Les corps JSON de démarrage sont limités à 8 Ko.
+Les liens d’emails (invitation, reset) sont construits par `buildAppUrl` à partir
+de `APP_URL` puis `AUTH_URL`. En production les deux valent `https://mombongo.fr`.
 
 ## Messagerie et exploitation locale
 
@@ -56,9 +66,10 @@ ne sont ni servis par HTTP ni inscrits dans les logs. Lecture volontaire avec
 `npm run mail:local`. Ce mode est refusé en production.
 
 Resend est implémenté avec une clé d’idempotence par challenge et numéro d’envoi.
-Son activation exige une clé API et un expéditeur autorisé. Les envois réels n’ont
-pas été testés sans ces paramètres. Un timeout fournisseur peut invalider un code
-déjà reçu : recommencer la connexion dans ce cas.
+Son activation exige `MAIL_TRANSPORT=resend`, `RESEND_API_KEY` et `EMAIL_FROM`
+(domaine déjà authentifié chez Resend). DNS/SPF/DKIM ne sont pas gérés par
+l’application. Un timeout fournisseur peut invalider un code déjà reçu :
+recommencer la connexion dans ce cas.
 
 Ne pas qualifier le code email de mécanisme résistant au phishing. TOTP ou passkeys
 pourront compléter cette validation en deux étapes.
@@ -73,7 +84,7 @@ Test navigateur : accès protégé, inscription, validation, déconnexion, recon
 révocation serveur, rejet d’une origine étrangère, limite de taille des requêtes
 et affichage mobile. TypeScript, validation Prisma et build Webpack réussis.
 
-À développer avant une ouverture publique : invitation et gestion des rôles, interface des sessions, nettoyage périodique des
+À développer avant une ouverture publique : interface des sessions, nettoyage périodique des
 challenges/compteurs expirés et des emails locaux, journal d’audit et tests de charge.
 Aucune politique de conservation automatique n’est encore activée.
 

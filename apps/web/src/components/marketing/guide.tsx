@@ -11,17 +11,17 @@ const topics = [
 
 export function Guide() {
   const [open, setOpen] = useState(false);
-  const [answer, setAnswer] = useState("Bonjour ! Je suis le guide de cette première version. Choisissez un sujet pour découvrir Facturia.");
+  const [answer, setAnswer] = useState("Bonjour ! Je suis le guide de cette première version. Choisissez un sujet pour découvrir Mombongo.");
   return (
     <>
       <Button type="button" onClick={() => setOpen(true)}>
         Découvrir avec le guide <ArrowUpRight size={16} />
       </Button>
       <Button type="button" aria-expanded={open} aria-controls="guide" className="fixed right-6 bottom-6 shadow-lg" onClick={() => setOpen(value => !value)}>
-        <MessageCircle size={18} />Guide Facturia
+        <MessageCircle size={18} />Guide Mombongo
       </Button>
       {open && (
-        <section id="guide" aria-label="Guide Facturia" className="fixed right-4 bottom-20 z-10 w-[calc(100%-2rem)] max-w-sm rounded-2xl border border-border bg-card p-5 shadow-xl">
+        <section id="guide" aria-label="Guide Mombongo" className="fixed right-4 bottom-20 z-10 w-[calc(100%-2rem)] max-w-sm rounded-2xl border border-border bg-card p-5 shadow-xl">
           <div className="mb-4 flex items-center justify-between">
             <h2 className="font-semibold">Votre guide</h2>
             <button type="button" aria-label="Fermer le guide" className="rounded p-2 hover:bg-muted" onClick={() => setOpen(false)}>

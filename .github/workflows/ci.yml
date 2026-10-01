@@ -27,6 +27,7 @@ jobs:
       DATABASE_URL: postgresql://facturia:facturia_ci@127.0.0.1:5432/facturia?schema=public
       AUTH_SECRET: ci-auth-secret-at-least-32-characters
       AUTH_URL: http://localhost:9070
+      APP_URL: http://localhost:9070
       MAIL_TRANSPORT: local
       LOCAL_MAIL_DIR: ${{ github.workspace }}/.local/mail
     steps:
@@ -42,4 +43,4 @@ jobs:
       - run: npm run typecheck
       - run: mkdir -p .local/mail
       - run: npm run test:auth
-      - run: npm run build --workspace @facturia/web -- --webpack
+      - run: npm run build --workspace @mombongo/web -- --webpack

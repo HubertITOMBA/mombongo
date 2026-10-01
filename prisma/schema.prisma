@@ -27,6 +27,163 @@ enum AddressType {
   OTHER
 }
 
+enum OrganizationEntityKind {
+  SOLE_TRADER
+  COMPANY
+}
+
+enum CustomerPartyKind {
+  PERSON
+  COMPANY
+}
+
+enum CustomerCivility {
+  MR
+  MRS
+  MX
+}
+
+enum CustomerKind {
+  PROSPECT
+  CLIENT
+}
+
+enum CustomerStatus {
+  ACTIVE
+  ARCHIVED
+}
+
+enum PipelineStage {
+  NEW
+  CONTACTED
+  QUALIFIED
+  MEETING
+  PROPOSAL
+  NEGOTIATION
+  WON
+  LOST
+}
+
+enum ActivityType {
+  CREATED
+  NOTE
+  EMAIL
+  CALL
+  MEETING
+  STAGE
+  CONVERTED
+  QUOTE
+  INVOICE
+  CREDIT_NOTE
+  PAYMENT
+}
+
+enum DocumentKind {
+  QUOTE
+  INVOICE
+  CREDIT_NOTE
+}
+
+enum DocumentStatus {
+  DRAFT
+  SENT
+  ACCEPTED
+  REFUSED
+  CANCELLED
+}
+
+enum LineItemKind {
+  PRODUCT
+  SERVICE
+}
+
+enum LineTaxCategory {
+  STANDARD
+  ZERO_RATED
+  EXEMPT
+  REVERSE_CHARGE
+  OUT_OF_SCOPE
+}
+
+enum OperationCategory {
+  GOODS
+  SERVICES
+  MIXED
+}
+
+enum AppointmentStatus {
+  SCHEDULED
+  CONFIRMED
+  CANCELLED
+  DONE
+}
+
+enum PaymentMethod {
+  BANK_TRANSFER
+  CARD
+  CASH
+  CHECK
+  DIRECT_DEBIT
+  PAYPAL
+  OTHER
+}
+
+enum PaymentStatus {
+  CONFIRMED
+  CANCELLED
+}
+
+enum PaymentProvider {
+  MANUAL
+  STRIPE
+  PAYPAL
+}
+
+enum DocumentEmailStatus {
+  QUEUED
+  SENT
+  FAILED
+}
+
+enum DocumentEmailProvider {
+  LOCAL
+  RESEND
+}
+
+model DemoDataset {
+  key           String         @id
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  organizations Organization[]
+  users         User[]
+}
+
+model DocumentEmailDelivery {
+  id                String                 @id @default(cuid())
+  organizationId    String
+  documentId        String
+  toEmail           String
+  replyToEmail      String?
+  subject           String
+  message           String
+  provider          DocumentEmailProvider
+  providerMessageId String?
+  status            DocumentEmailStatus    @default(QUEUED)
+  errorCode         String?
+  errorMessage      String?
+  sentById          String?
+  idempotencyKey    String
+  sentAt            DateTime?
+  organization      Organization           @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  document          Document               @relation(fields: [documentId, organizationId], references: [id, organizationId], onDelete: Restrict)
+  sentBy            User?                  @relation(fields: [sentById], references: [id], onDelete: SetNull)
+  createdAt         DateTime               @default(now())
+  updatedAt         DateTime               @updatedAt
+
+  @@unique([organizationId, idempotencyKey])
+  @@index([organizationId, documentId, createdAt])
+}
+
 model User {
   id            String       @id @default(cuid())
   email         String       @unique
@@ -36,21 +193,67 @@ model User {
   emailVerified DateTime?
   createdAt     DateTime     @default(now())
   updatedAt     DateTime     @updatedAt
-  memberships   Membership[]
-  authSessions  AuthSession[]
+  memberships    Membership[]
+  authSessions   AuthSession[]
   passwordResets PasswordReset[]
+  invitationsSent Invitation[]
+  mobileRefreshTokens MobileRefreshToken[]
+  ownedCustomers Customer[] @relation("CustomerOwner")
+  customerActivities CustomerActivity[]
+  appointmentsCreated Appointment[]
+  documentsCreated    Document[]
+  paymentsRecorded    Payment[]
+  documentEmailsSent  DocumentEmailDelivery[]
+  demoDatasetKey      String?
+  demoDataset         DemoDataset? @relation(fields: [demoDatasetKey], references: [key], onDelete: SetNull)
+
+  @@index([demoDatasetKey])
 }
 
 model Organization {
-  id           String       @id @default(cuid())
-  name         String
-  slug         String       @unique
-  currency     String       @default("EUR") @db.Char(3)
-  timezone     String       @default("Europe/Paris")
-  createdAt    DateTime     @default(now())
-  updatedAt    DateTime     @updatedAt
-  memberships  Membership[]
-  customers    Customer[]
+  id             String                  @id @default(cuid())
+  name           String
+  slug           String                  @unique
+  entityKind     OrganizationEntityKind?
+  legalName      String?
+  tradeName      String?
+  legalFormLabel String?
+  siren          String?
+  siret          String?
+  vatNumber      String?
+  email          String?
+  phone          String?
+  website        String?
+  countryCode    String?                 @db.Char(2)
+  currency       String                  @default("EUR") @db.Char(3)
+  timezone       String                  @default("Europe/Paris")
+  vatOnDebits    Boolean?
+  invoiceDueDays Int?
+  paymentTerms   String?
+  earlyPaymentDiscountTerms String?
+  latePaymentPenaltyTerms   String?
+  recoveryFeeMention        String?
+  createdAt      DateTime                @default(now())
+  updatedAt      DateTime                @updatedAt
+  memberships    Membership[]
+  customers      Customer[]
+  addresses      Address[]
+  invitations    Invitation[]
+  activities     CustomerActivity[]
+  appointments   Appointment[]
+  documents      Document[]
+  sequences      DocumentSequence[]
+  catalogItems   CatalogItem[]
+  payments       Payment[]
+  electronicInvoicingConnection ElectronicInvoicingConnection?
+  electronicTransmissions ElectronicTransmission[]
+  electronicInboundDocuments ElectronicInboundDocument[]
+  paymentConnections PaymentConnection[]
+  documentEmails     DocumentEmailDelivery[]
+  demoDatasetKey     String?
+  demoDataset        DemoDataset? @relation(fields: [demoDatasetKey], references: [key], onDelete: Restrict)
+
+  @@index([demoDatasetKey])
 }
 
 model Membership {
@@ -66,36 +269,291 @@ model Membership {
   @@index([organizationId])
 }
 
-model Customer {
-  id             String       @id @default(cuid())
+model Invitation {
+  id             String       @id
+  email          String
   organizationId String
-  displayName    String
-  email          String?
-  phone          String?
-  companyNumber  String?
-  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Restrict)
-  addresses      Address[]
+  role           MemberRole
+  tokenHash      String
+  invitedById    String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  invitedBy      User         @relation(fields: [invitedById], references: [id], onDelete: Cascade)
   createdAt      DateTime     @default(now())
-  updatedAt      DateTime     @updatedAt
+  expiresAt      DateTime
+  consumedAt     DateTime?
+
+  @@index([organizationId, email])
+  @@index([email])
+  @@index([expiresAt])
+}
+
+model Customer {
+  id              String             @id @default(cuid())
+  organizationId  String
+  partyKind       CustomerPartyKind?
+  civility        CustomerCivility?
+  firstName       String?
+  lastName        String?
+  legalName       String?
+  tradeName       String?
+  displayName     String
+  email           String?
+  phone           String?
+  siren           String?
+  siret           String?
+  vatNumber       String?
+  companyNumber   String?
+  taxablePerson   Boolean?
+  kind            CustomerKind       @default(CLIENT)
+  status          CustomerStatus @default(ACTIVE)
+  stage           PipelineStage  @default(NEW)
+  source          String?
+  ownerUserId     String?
+  estimatedCents  Int?
+  probability     Int?
+  nextAction      String?
+  nextActionAt    DateTime?
+  notes           String?
+  archivedAt      DateTime?
+  organization    Organization   @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  owner           User?          @relation("CustomerOwner", fields: [ownerUserId], references: [id], onDelete: SetNull)
+  addresses       Address[]
+  activities      CustomerActivity[]
+  appointments    Appointment[]
+  documents       Document[]
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
 
   @@unique([id, organizationId])
   @@index([organizationId, displayName])
+  @@index([organizationId, status, kind])
+  @@index([organizationId, stage])
+}
+
+model CustomerActivity {
+  id             String       @id @default(cuid())
+  organizationId String
+  customerId     String
+  type           ActivityType
+  message        String
+  createdById    String?
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  customer       Customer     @relation(fields: [customerId, organizationId], references: [id, organizationId], onDelete: Cascade)
+  createdBy      User?        @relation(fields: [createdById], references: [id], onDelete: SetNull)
+  createdAt      DateTime     @default(now())
+
+  @@index([organizationId, customerId, createdAt])
+}
+
+model Appointment {
+  id             String            @id @default(cuid())
+  organizationId String
+  customerId     String?
+  createdById    String?
+  title          String
+  startsAt       DateTime
+  endsAt         DateTime
+  location       String?
+  notes          String?
+  status         AppointmentStatus @default(SCHEDULED)
+  organization   Organization      @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  customer       Customer?         @relation(fields: [customerId, organizationId], references: [id, organizationId], onDelete: Cascade)
+  createdBy      User?             @relation(fields: [createdById], references: [id], onDelete: SetNull)
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+
+  @@index([organizationId, startsAt])
+  @@index([organizationId, status, startsAt])
+  @@index([organizationId, customerId])
+}
+
+model DocumentSequence {
+  organizationId String
+  kind           DocumentKind
+  year           Int
+  lastNumber     Int          @default(0)
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@id([organizationId, kind, year])
+}
+
+model Document {
+  id             String         @id @default(cuid())
+  organizationId String
+  customerId     String
+  createdById    String?
+  kind           DocumentKind   @default(QUOTE)
+  status         DocumentStatus @default(DRAFT)
+  number         String?
+  title          String
+  notes          String?
+  validUntil     DateTime?
+  issuedAt       DateTime?
+  dueDate        DateTime?
+  supplyDate     DateTime?
+  customerOrderNumber String?
+  operationCategory OperationCategory?
+  issuerNameSnapshot             String?
+  issuerCurrencySnapshot         String?        @db.Char(3)
+  issuerEntityKindSnapshot       String?
+  issuerLegalNameSnapshot        String?
+  issuerTradeNameSnapshot        String?
+  issuerLegalFormLabelSnapshot   String?
+  issuerSirenSnapshot            String?
+  issuerSiretSnapshot            String?
+  issuerVatNumberSnapshot        String?
+  issuerEmailSnapshot            String?
+  issuerPhoneSnapshot            String?
+  issuerCountryCodeSnapshot      String?        @db.Char(2)
+  issuerAddressSnapshot          String?
+  issuerAddressJsonSnapshot      Json?
+  issuerVatOnDebitsSnapshot      Boolean?
+  paymentTermsSnapshot           String?
+  earlyPaymentDiscountTermsSnapshot String?
+  latePaymentPenaltyTermsSnapshot   String?
+  recoveryFeeMentionSnapshot        String?
+  customerNameSnapshot           String?
+  customerEmailSnapshot          String?
+  customerPhoneSnapshot          String?
+  customerCompanyNumberSnapshot  String?
+  customerAddressSnapshot        String?
+  customerPartyKindSnapshot      String?
+  customerCivilitySnapshot       String?
+  customerFirstNameSnapshot      String?
+  customerLastNameSnapshot       String?
+  customerLegalNameSnapshot      String?
+  customerTradeNameSnapshot      String?
+  customerSirenSnapshot          String?
+  customerSiretSnapshot          String?
+  customerVatNumberSnapshot      String?
+  customerCountryCodeSnapshot    String?        @db.Char(2)
+  customerTaxablePersonSnapshot  Boolean?
+  customerAddressJsonSnapshot    Json?
+  customerDeliveryAddressSnapshot String?
+  customerDeliveryAddressJsonSnapshot Json?
+  vatBreakdownSnapshot           Json?
+  htCents        Int            @default(0)
+  vatCents       Int            @default(0)
+  ttcCents         Int            @default(0)
+  creditReason     String?
+  sourceDocumentId String?        @unique
+  creditedInvoiceId String?
+  organization     Organization   @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  customer         Customer       @relation(fields: [customerId, organizationId], references: [id, organizationId], onDelete: Restrict)
+  createdBy        User?          @relation(fields: [createdById], references: [id], onDelete: SetNull)
+  source           Document?      @relation("DocumentSource", fields: [sourceDocumentId], references: [id], onDelete: Restrict)
+  derived          Document[]     @relation("DocumentSource")
+  creditedInvoice  Document?      @relation("InvoiceCreditNotes", fields: [creditedInvoiceId, organizationId], references: [id, organizationId], onDelete: Restrict)
+  creditNotes      Document[]     @relation("InvoiceCreditNotes")
+  lines            DocumentLine[]
+  payments         Payment[]
+  electronicTransmissions ElectronicTransmission[]
+  emailDeliveries  DocumentEmailDelivery[]
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+
+  @@unique([id, organizationId])
+  @@unique([organizationId, kind, number])
+  @@index([organizationId, status, createdAt])
+  @@index([organizationId, customerId])
+  @@index([organizationId, creditedInvoiceId])
+}
+
+model DocumentLine {
+  id             String        @id @default(cuid())
+  organizationId String
+  documentId     String
+  description    String
+  quantity       Decimal       @db.Decimal(12, 3)
+  unit           String?       @default("unité")
+  unitCode       String?
+  unitPriceCents Int
+  discountBps    Int           @default(0)
+  vatBps         Int
+  taxCategory    LineTaxCategory?
+  taxExemptionReason     String?
+  taxExemptionReasonCode String?
+  htCents        Int
+  vatCents       Int
+  ttcCents       Int
+  itemKind       LineItemKind?
+  position       Int           @default(0)
+  sourceInvoiceLineId String?
+  document       Document      @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  sourceInvoiceLine DocumentLine? @relation("CreditLineSource", fields: [sourceInvoiceLineId], references: [id], onDelete: Restrict)
+  creditedBy     DocumentLine[] @relation("CreditLineSource")
+  createdAt      DateTime      @default(now())
+
+  @@index([documentId, position])
+  @@index([sourceInvoiceLineId])
+}
+
+model Payment {
+  id                String          @id @default(cuid())
+  organizationId    String
+  invoiceId         String
+  amountCents       Int
+  currency          String          @db.Char(3)
+  paidAt            DateTime
+  method            PaymentMethod
+  reference         String?
+  note              String?
+  status            PaymentStatus   @default(CONFIRMED)
+  provider          PaymentProvider @default(MANUAL)
+  providerPaymentId String?
+  createdById       String?
+  organization      Organization    @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  invoice           Document        @relation(fields: [invoiceId, organizationId], references: [id, organizationId], onDelete: Restrict)
+  createdBy         User?           @relation(fields: [createdById], references: [id], onDelete: SetNull)
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+  electronicTransmissions ElectronicTransmission[]
+
+  @@unique([organizationId, provider, providerPaymentId])
+  @@index([organizationId, invoiceId])
+  @@index([organizationId, status, paidAt])
+}
+
+model CatalogItem {
+  id             String       @id @default(cuid())
+  organizationId String
+  itemKind       LineItemKind
+  reference      String?
+  name           String
+  description    String?
+  unit           String       @default("unité")
+  unitCode       String?
+  unitPriceCents Int
+  vatBps         Int
+  taxCategory    LineTaxCategory?
+  taxExemptionReason     String?
+  taxExemptionReasonCode String?
+  active         Boolean      @default(true)
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  @@unique([organizationId, reference])
+  @@index([organizationId, active])
+  @@index([organizationId, itemKind])
+  @@index([organizationId, name])
 }
 
 model Address {
-  id             String      @id @default(cuid())
+  id             String       @id @default(cuid())
   organizationId String
-  customerId     String
+  customerId     String?
   type           AddressType
   label          String
   line1          String
   line2          String?
   postalCode     String
   city           String
-  countryCode    String      @db.Char(2)
-  customer       Customer    @relation(fields: [customerId, organizationId], references: [id, organizationId], onDelete: Cascade)
-  createdAt      DateTime    @default(now())
-  updatedAt      DateTime    @updatedAt
+  countryCode    String       @db.Char(2)
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  customer       Customer?    @relation(fields: [customerId, organizationId], references: [id, organizationId], onDelete: Cascade)
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
 
   @@index([organizationId, customerId])
 }
@@ -147,6 +605,22 @@ model AuthRateLimit {
   @@index([expiresAt])
 }
 
+model MobileRefreshToken {
+  id         String    @id
+  userId     String
+  familyId   String
+  tokenHash  String
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt  DateTime  @default(now())
+  expiresAt  DateTime
+  consumedAt DateTime?
+  revokedAt  DateTime?
+
+  @@index([userId])
+  @@index([familyId])
+  @@index([expiresAt])
+}
+
 model PasswordReset {
   id         String    @id
   tokenHash  String
@@ -158,4 +632,202 @@ model PasswordReset {
 
   @@index([userId])
   @@index([expiresAt])
+}
+
+enum ElectronicInvoicingProvider {
+  MOCK
+}
+
+enum ElectronicConnectionStatus {
+  INACTIVE
+  READY
+  ERROR
+  DISABLED
+}
+
+enum ElectronicConnectionEnvironment {
+  TEST
+  PRODUCTION
+}
+
+enum ElectronicTransmissionDirection {
+  OUTBOUND
+  INBOUND
+}
+
+enum ElectronicTransmissionKind {
+  INVOICE
+  CREDIT_NOTE
+  E_REPORTING
+  PAYMENT_REPORTING
+  INBOUND_INVOICE
+}
+
+enum ElectronicTransmissionStatus {
+  PENDING
+  QUEUED
+  SUBMITTED
+  ACCEPTED
+  DELIVERED
+  REJECTED
+  FAILED
+}
+
+enum ElectronicTransmissionOperation {
+  SUBMIT_INVOICE
+  SUBMIT_CREDIT_NOTE
+  SUBMIT_E_REPORTING
+  PREPARE_PAYMENT_REPORTING
+  RECEIVE_INVOICE
+}
+
+enum ElectronicTransmissionEventType {
+  CREATED
+  VALIDATED
+  QUEUED
+  SUBMITTED
+  ACCEPTED
+  DELIVERED
+  REJECTED
+  ERROR
+  WEBHOOK_RECEIVED
+}
+
+enum ElectronicErrorClass {
+  TEMPORARY
+  PERMANENT
+  VALIDATION
+  AUTHENTICATION
+  RATE_LIMIT
+  UNKNOWN
+}
+
+model ElectronicInvoicingConnection {
+  id                String                          @id @default(cuid())
+  organizationId    String                          @unique
+  provider          ElectronicInvoicingProvider
+  connectorKey      String                          @default("MOCK")
+  status            ElectronicConnectionStatus      @default(INACTIVE)
+  environment       ElectronicConnectionEnvironment @default(TEST)
+  externalAccountId String?
+  credentialRef     String?
+  lastCheckedAt     DateTime?
+  lastCheckOk       Boolean?
+  organization      Organization                    @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  transmissions     ElectronicTransmission[]
+  createdAt         DateTime                        @default(now())
+  updatedAt         DateTime                        @updatedAt
+
+  @@unique([provider, externalAccountId])
+  @@index([organizationId, provider])
+  @@index([organizationId, connectorKey])
+}
+
+model ElectronicTransmission {
+  id                     String                           @id @default(cuid())
+  organizationId         String
+  documentId             String?
+  paymentId              String?
+  connectionId           String?
+  provider               ElectronicInvoicingProvider
+  connectorKey           String                           @default("MOCK")
+  direction              ElectronicTransmissionDirection
+  kind                   ElectronicTransmissionKind
+  route                  String
+  operation              ElectronicTransmissionOperation
+  status                 ElectronicTransmissionStatus     @default(PENDING)
+  idempotencyKey         String
+  providerTransmissionId String?
+  providerDocumentId     String?
+  submittedAt            DateTime?
+  acceptedAt             DateTime?
+  deliveredAt            DateTime?
+  rejectedAt             DateTime?
+  lastErrorClass         ElectronicErrorClass?
+  lastErrorCode          String?
+  lastErrorMessage       String?
+  organization           Organization                     @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  document               Document?                        @relation(fields: [documentId, organizationId], references: [id, organizationId], onDelete: Restrict)
+  payment                Payment?                         @relation(fields: [paymentId], references: [id], onDelete: Restrict)
+  connection             ElectronicInvoicingConnection?   @relation(fields: [connectionId], references: [id], onDelete: SetNull)
+  events                 ElectronicTransmissionEvent[]
+  inboundDocument        ElectronicInboundDocument?
+  createdAt              DateTime                         @default(now())
+  updatedAt              DateTime                         @updatedAt
+
+  @@unique([organizationId, operation, idempotencyKey])
+  @@unique([provider, providerTransmissionId])
+  @@index([organizationId, documentId])
+  @@index([organizationId, status, createdAt])
+  @@index([connectionId])
+}
+
+model ElectronicTransmissionEvent {
+  id              String                          @id @default(cuid())
+  organizationId  String
+  transmissionId  String
+  type            ElectronicTransmissionEventType
+  status          ElectronicTransmissionStatus?
+  providerEventId String?
+  providerStatus  String?
+  errorClass      ElectronicErrorClass?
+  errorCode       String?
+  message         String?
+  metadata        Json?
+  occurredAt      DateTime
+  receivedAt      DateTime                        @default(now())
+  transmission    ElectronicTransmission          @relation(fields: [transmissionId], references: [id], onDelete: Cascade)
+  createdAt       DateTime                        @default(now())
+
+  @@unique([organizationId, providerEventId])
+  @@index([transmissionId, createdAt])
+  @@index([organizationId, createdAt])
+}
+
+model ElectronicInboundDocument {
+  id                 String                      @id @default(cuid())
+  organizationId     String
+  transmissionId     String                      @unique
+  provider           ElectronicInvoicingProvider
+  providerDocumentId String
+  supplierName       String?
+  documentNumber     String?
+  currency           String?                     @db.Char(3)
+  ttcCents           Int?
+  receivedAt         DateTime
+  organization       Organization                @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  transmission       ElectronicTransmission      @relation(fields: [transmissionId], references: [id], onDelete: Restrict)
+  createdAt          DateTime                    @default(now())
+
+  @@unique([organizationId, provider, providerDocumentId])
+  @@index([organizationId, receivedAt])
+}
+
+enum PaymentConnectionStatus {
+  DISABLED
+  CONFIGURED
+  READY
+  ERROR
+}
+
+enum PaymentConnectionEnvironment {
+  SANDBOX
+  PRODUCTION
+}
+
+model PaymentConnection {
+  id             String                        @id @default(cuid())
+  organizationId String
+  connectorKey   String
+  status         PaymentConnectionStatus       @default(DISABLED)
+  environment    PaymentConnectionEnvironment  @default(SANDBOX)
+  credentialRef  String?
+  lastCheckedAt  DateTime?
+  lastCheckOk    Boolean?
+  organization   Organization                  @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  createdAt      DateTime                      @default(now())
+  updatedAt      DateTime                      @updatedAt
+
+  @@unique([organizationId, connectorKey, environment])
+  @@index([organizationId, connectorKey])
 }

@@ -2,7 +2,7 @@
 
 import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
-import { CHALLENGE_COOKIE, challengeCookieOptions } from "./crypto";
+import { CHALLENGE_COOKIE, LEGACY_CHALLENGE_COOKIE, challengeCookieOptions } from "./crypto";
 import { AuthFlowError, clientAddress } from "./rate-limit";
 import { beginAuth, resendCode } from "./service";
 import { requestPasswordReset, resetPassword } from "./password-reset";
@@ -25,7 +25,9 @@ export async function startAuthAction(_prev: AuthActionState | undefined, formDa
   delete body.kind;
   try {
     const token = await beginAuth(kind, body, clientAddress({ headers: await headers() }));
-    (await cookies()).set(CHALLENGE_COOKIE, token, challengeCookieOptions());
+    const jar = await cookies();
+    jar.set(CHALLENGE_COOKIE, token, challengeCookieOptions());
+    jar.delete(LEGACY_CHALLENGE_COOKIE);
   } catch (error) {
     return fail(error);
   }
@@ -53,7 +55,9 @@ export async function requestPasswordResetAction(_prev: AuthActionState | undefi
 export async function resetPasswordAction(_prev: AuthActionState | undefined, formData: FormData): Promise<AuthActionState> {
   try {
     await resetPassword(formObject(formData), clientAddress({ headers: await headers() }));
-    (await cookies()).delete(CHALLENGE_COOKIE);
+    const jar = await cookies();
+    jar.delete(CHALLENGE_COOKIE);
+    jar.delete(LEGACY_CHALLENGE_COOKIE);
     return { ok: true };
   } catch (error) {
     return fail(error);

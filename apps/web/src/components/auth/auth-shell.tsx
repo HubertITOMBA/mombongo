@@ -1,14 +1,15 @@
 import type { ReactNode } from "react";
 import Link from "next/link";
-import { ArrowLeft, Layers, ShieldCheck } from "lucide-react";
+import { ArrowLeft, ShieldCheck } from "lucide-react";
+import { BrandLogo, BrandMarkImage } from "@/components/brand";
 import { Card, CardContent } from "@/components/ui/card";
 
 export function AuthShell({ title, description, children }: { title: string; description: string; children: ReactNode }) {
   return (
     <main className="mx-auto grid min-h-screen max-w-6xl items-center gap-12 px-6 py-10 lg:grid-cols-2">
       <section className="hidden lg:block">
-        <Link href="/" className="mb-16 inline-flex items-center gap-2 text-2xl font-bold">
-          <Layers className="text-emerald-700" />facturia.
+        <Link href="/" aria-label="Mombongo" className="mb-10 block max-w-xs">
+          <BrandLogo priority className="max-w-72" />
         </Link>
         <p className="text-sm font-medium uppercase tracking-widest text-primary">Vos factures, simplement</p>
         <h1 className="mt-5 text-5xl font-semibold leading-tight">
@@ -24,6 +25,9 @@ export function AuthShell({ title, description, children }: { title: string; des
       </section>
       <Card className="w-full max-w-lg justify-self-center rounded-2xl shadow-sm">
         <CardContent className="p-6 sm:p-10">
+          <Link href="/" aria-label="Mombongo" className="mb-6 inline-flex items-center lg:hidden">
+            <BrandMarkImage className="h-16" />
+          </Link>
           <Link href="/" className="mb-8 inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-primary">
             <ArrowLeft size={16} />Retour à l’accueil
           </Link>
