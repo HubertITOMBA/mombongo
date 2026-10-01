@@ -10,6 +10,23 @@ Ne remplace pas les fiches détaillées de `DOCS/` : il les indexe. En cas d’�
 
 ---
 
+## Baseline Git officiel A1–A16
+
+| | |
+| --- | --- |
+| SHA | `2e367e6e76ea993f9fefcea18ba2e54a723e0f1b` |
+| Commit | `feat: versionner le produit Mombongo livré jusqu'à A16` |
+
+Ce SHA est le **baseline Git officiel A1–A16**.
+
+Ce qui est marqué `LIVRÉ` / `LIVRÉ / VALIDÉ` jusqu’à A16 **ne doit pas être réaudité** dans un nouveau chat, sauf anomalie nouvelle démontrée, régression ou demande explicite.
+
+**Toute phase ultérieure part de ce baseline.**
+
+État figé avec ce SHA : lint OK ; typecheck web + mobile OK ; `test:auth` 173 pass / 0 fail ; build webpack OK (43 pages) ; Playwright 23 passed ; PostgreSQL DEV 18.6 ; base `facturia` ; 21/21 migrations. A15.1 reste **DIFFÉRÉ**. Aucune PA réelle intégrée. Stripe / PayPal restent `coming_soon`.
+
+---
+
 ## 1. Identité du projet
 
 | Élément | Valeur |
