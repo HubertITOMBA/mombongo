@@ -1,4 +1,6 @@
-# Documentation Facturia
+# Documentation Mombongo
+
+**Passation :** [PROJECT-CONTEXT.md](PROJECT-CONTEXT.md) — avant toute intervention Mombongo, Cursor doit lire ce fichier.
 
 Ce dossier est la référence du projet. Chaque module décrit sa cible ; son existence dans DOCS ne signifie pas qu’il est implémenté.
 
@@ -22,3 +24,10 @@ Publics pris en charge : particuliers et entreprises. Hypothèses initiales à c
 - [Particuliers et entreprises](14-particuliers-entreprises.md)
 
 - [Mot de passe oublié et visibilité](15-recuperation-mot-de-passe.md)
+- [Équipe, invitations et rôles](16-equipe.md)
+- [PDF des devis, factures et avoirs](17-pdf-documents.md)
+- [Facturation électronique et Factur-X](18-facturation-electronique.md)
+- [Plateforme agréée (socle multi-provider)](19-plateforme-agreee.md)
+- [Intégrations (registre, connecteurs, secrets)](20-integrations.md)
+- [Envoi des documents par e-mail](21-emails-documents.md)
+- [Fixtures DEMO](22-fixtures-demo.md)
